@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HE – Tarjeta de Estado</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+
+  <style>
+    /* ── Base ───────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #EDE8DC;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    /* ── Wrapper ────────────────────── */
+    .he-wrap {
+      width: 100%;
+      max-width: 560px;
+      background: #F5F0E8;
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    /* ── Card ───────────────────────── */
+    .he-card {
+      background: #ffffff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    /* ── Card Top (olive) ───────────── */
+    .he-top {
+      background: #8B8B5A;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .he-ph {
+      background: #C8B89A;
+      border-radius: 6px;
+      height: 10px;
+      margin-bottom: 8px;
+    }
+
+    .he-id-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .he-id {
+      color: #2a2a2a;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .he-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 11px;
+      border-radius: 12px;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    .he-avatar-wrap {
+      background: #C8B89A;
+      border-radius: 12px;
+      padding: 8px;
+      margin-left: 16px;
+    }
+
+    .he-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #C0C0C0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 20px;
+    }
+
+    /* ── Card Bottom (white) ────────── */
+    .he-bottom { padding: 20px; }
+
+    /* ── Step Flow ──────────────────── */
+    .he-flow {
+      display: flex;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .he-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .he-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: background 0.25s, box-shadow 0.25s;
+    }
+
+    .he-circle.on {
+      background: #2CC4A0;
+      box-shadow:
+        0 0 0 6px rgba(44, 196, 160, 0.18),
+        0 0 0 12px rgba(44, 196, 160, 0.07);
+      color: #ffffff;
+    }
+
+    .he-circle.off {
+      background: #D4D4D4;
+      color: #A0A0A0;
+    }
+
+    .he-lbl {
+      font-size: 11px;
+      font-weight: 500;
+      color: #2a2a2a;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .he-line {
+      flex: 1;
+      height: 2px;
+      margin: 0 4px 20px;
+      transition: background 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+<div class="he-wrap">
+  <div class="he-card">
+
+    <!-- Sección superior: ID + avatar -->
+    <div class="he-top">
+      <div style="flex: 1;">
+        <div class="he-ph" style="width: 68%;"></div>
+        <div class="he-ph" style="width: 46%;"></div>
+        <div class="he-id-row">
+          <span class="he-id">HE-9753-2026</span>
+          <span class="he-pill" id="pill">Activa</span>
+        </div>
+      </div>
+      <div class="he-avatar-wrap">
+        <div class="he-avatar">
+          <i class="ti ti-user" aria-hidden="true"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección inferior: barra de proceso -->
+    <div class="he-bottom">
+      <div class="he-ph" style="width: 78%;"></div>
+      <div class="he-ph" style="width: 54%;"></div>
+
+      <div class="he-flow" id="flow" role="list" aria-label="Progreso de la solicitud"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  /* ── Pasos del proceso ─────────────────────────── */
+  const STEPS = [
+    { label: "Postulación", icon: "ti-paw"   },
+    { label: "Entrevista",  icon: "ti-clock" },
+    { label: "Visita",      icon: "ti-clock" },
+    { label: "Finalizado",  icon: "ti-check" },
+  ];
+
+  /* ── Estado actual (0 = Postulación … 3 = Finalizado) */
+  let currentStep = 0;   // <-- cambia este valor para probar
+
+  /* ── Renderiza el flujo ────────────────────────── */
+  function renderFlow() {
+    const flow = document.getElementById("flow");
+    flow.innerHTML = "";
+
+    STEPS.forEach((step, i) => {
+      const active  = i <= currentStep;
+      const current = i === currentStep;
+
+      /* Nodo */
+      const node = document.createElement("div");
+      node.className = "he-step";
+      node.setAttribute("role", "listitem");
+      node.setAttribute("aria-current", current ? "step" : "false");
+
+      /* Círculo */
+      const circle = document.createElement("div");
+      circle.className = "he-circle " + (active ? "on" : "off");
+      circle.innerHTML = `<i class="ti ${step.icon}" aria-hidden="true"></i>`;
+
+      /* Etiqueta */
+      const label = document.createElement("span");
+      label.className = "he-lbl";
+      label.textContent = step.label;
+
+      node.appendChild(circle);
+      node.appendChild(label);
+      flow.appendChild(node);
+
+      /* Conector */
+      if (i < STEPS.length - 1) {
+        const line = document.createElement("div");
+        line.className = "he-line";
+        line.style.background = i < currentStep ? "#2CC4A0" : "#D4D4D4";
+        flow.appendChild(line);
+      }
+    });
+
+    /* Píldora de estado */
+    const pill   = document.getElementById("pill");
+    const labels = ["Activa",   "En proceso", "En proceso", "Completada"];
+    const bgs    = ["#2CC4A0",  "#F0C050",    "#F0C050",    "#6A9B6A"  ];
+    const fgs    = ["#04342C",  "#412402",    "#412402",    "#173404"  ];
+    pill.textContent      = labels[currentStep];
+    pill.style.background = bgs[currentStep];
+    pill.style.color      = fgs[currentStep];
+  }
+
+  /* ── Para usar desde fuera:
+       setStep(2)  →  mueve la barra al paso "Visita"
+  ─────────────────────────────────────────────────── */
+  function setStep(n) {
+    currentStep = Math.min(Math.max(n, 0), STEPS.length - 1);
+    renderFlow();
+  }
+
+  /* Render inicial */
+  renderFlow();
+</script>
+
+</body>
+</html>
